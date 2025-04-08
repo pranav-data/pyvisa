@@ -260,6 +260,7 @@ class Resource(object):
         self,
         access_mode: constants.AccessModes = constants.AccessModes.no_lock,
         open_timeout: int = 5000,
+        scan_timeout: int = 2000,  # ms
     ) -> None:
         """Opens a session to the specified resource.
 
@@ -289,8 +290,8 @@ class Resource(object):
                 # Every 0.1 seconds we probe it with viClear.
                 start_time = time.time()
                 sleep_time = 0.1
-                try_time = 5
-                while time.time() - start_time < try_time:
+
+                while time.time() - start_time < scan_timeout / 1000:
                     time.sleep(sleep_time)
                     try:
                         self.clear()

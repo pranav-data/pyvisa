@@ -486,7 +486,10 @@ class MessageBasedResource(Resource):
         return ret
 
     def read(
-        self, termination: Optional[str] = None, encoding: Optional[str] = None
+        self,
+        termination: Optional[str] = None,
+        encoding: Optional[str] = None,
+        chunk_size: Optional[int] = None,
     ) -> str:
         """Read a string from the device.
 
@@ -513,20 +516,21 @@ class MessageBasedResource(Resource):
 
         """
         enco = self._encoding if encoding is None else encoding
+        chunk_size = self.chunk_size if chunk_size is None else chunk_size
 
         if termination is None:
             termination = self._read_termination
-            message = self._read_raw().decode(enco)
+            message = self._read_raw(chunk_size).decode(enco)
         else:
             with self.read_termination_context(termination):
-                message = self._read_raw().decode(enco)
+                message = self._read_raw(chunk_size).decode(enco)
 
         if not termination:
             return message
 
         if not message.endswith(termination):
-            warnings.warn(
-                "read string doesn't end with termination characters", stacklevel=2
+            logger.warning(
+                "read string doesn't end with " "termination characters", stacklevel=2
             )
             return message
 
@@ -664,7 +668,14 @@ class MessageBasedResource(Resource):
         except ValueError as e:
             raise errors.InvalidBinaryFormat(e.args[0])
 
-    def query(self, message: str, delay: Optional[float] = None) -> str:
+    def query(
+        self,
+        message: str,
+        delay: Optional[float] = None,
+        termination: Optional[str] = None,
+        encoding: Optional[str] = None,
+        chunk_size: Optional[int] = None,
+    ) -> str:
         """A combination of write(message) and read()
 
         Parameters
@@ -681,13 +692,13 @@ class MessageBasedResource(Resource):
             Answer from the device.
 
         """
-        self.write(message)
+        self.write(message, termination, encoding)
 
         delay = self.query_delay if delay is None else delay
         if delay > 0.0:
             time.sleep(delay)
 
-        return self.read()
+        return self.read(termination, encoding, chunk_size)
 
     def query_ascii_values(
         self,
