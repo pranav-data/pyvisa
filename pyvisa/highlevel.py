@@ -3223,6 +3223,7 @@ class ResourceManager(object):
         access_mode: constants.AccessModes = constants.AccessModes.no_lock,
         open_timeout: int = constants.VI_TMO_IMMEDIATE,
         resource_pyclass: Optional[Type["Resource"]] = None,
+        scan_timeout: Optional[int] = 2000,
         **kwargs: Any,
     ) -> "Resource":
         """Return an instrument for the resource name.
@@ -3290,7 +3291,7 @@ class ResourceManager(object):
                         % (key, res.__class__.__name__)
                     )
 
-            res.open(access_mode, open_timeout)
+            res.open(access_mode, open_timeout, scan_timeout)
 
             for key, value in kwargs.items():
                 setattr(res, key, value)
